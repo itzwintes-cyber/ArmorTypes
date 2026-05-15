@@ -1,0 +1,52 @@
+name: GitHub Pages
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: config.js из Secrets (Supabase)
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          node <<'NODE'
+          const fs = require("fs");
+          const url = process.env.SUPABASE_URL || "";
+          const key = process.env.SUPABASE_ANON_KEY || "";
+          const body = {
+            supabaseUrl: url,
+            supabaseAnonKey: key,
+            statsTable: "player_stats",
+            playerName: "",
+          };
+          fs.writeFileSync(
+            "config.js",
+            "window.GAME_CONFIG = " + JSON.stringify(body, null, 2) + ";\n"
+          );
+          NODE
+
+      - uses: actions/configure-pages@v4
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+      - id: deploy
+        uses: actions/deploy-pages@v4

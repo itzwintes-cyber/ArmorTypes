@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ArmorType — опознай технику</title>
+    <meta
+      name="description"
+      id="meta-description"
+      content="ArmorType: угадай тип, эпоху и страну военной техники."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app app--menu" id="app">
+      <button type="button" class="lang-toggle" id="btn-lang" data-i18n-aria="langAria">EN</button>
+
+      <header class="brand" id="app-brand" aria-label="ArmorType">
+        <span class="brand__name">ArmorType</span>
+        <span class="brand__tag" data-i18n="brandTag">тип · эпоха · страна</span>
+      </header>
+
+      <section id="screen-menu" class="screen screen--active" data-i18n-aria="ariaMenu" aria-label="ArmorType — меню">
+        <div class="menu">
+          <h1 class="menu__logo">ArmorType</h1>
+          <p class="menu__tagline" data-i18n="menuTagline">Опознай военную технику</p>
+          <p class="menu__sub" data-i18n="menuSub">Тип · эпоха · страна</p>
+
+          <dl class="menu__quick" id="menu-quick-stats" hidden>
+            <div>
+              <dt data-i18n="statCorrect">Верно</dt>
+              <dd id="menu-stat-ok">0</dd>
+            </div>
+            <div>
+              <dt>K/D</dt>
+              <dd id="menu-stat-kd">0.0</dd>
+            </div>
+            <div>
+              <dt data-i18n="statRounds">Раундов</dt>
+              <dd id="menu-stat-total">0</dd>
+            </div>
+          </dl>
+
+          <nav class="menu__nav">
+            <button type="button" class="menu__btn menu__btn--primary" id="btn-play" data-i18n="play">Играть</button>
+            <button type="button" class="menu__btn" id="btn-menu-stats" data-i18n="stats">Статистика</button>
+          </nav>
+
+          <details class="menu__rules">
+            <summary data-i18n="howToPlay">Как играть</summary>
+            <ol>
+              <li data-i18n="rule1">Сверху — образец техники. Угадай три параметра.</li>
+              <li data-i18n="rule2">Клик по кубику в пуле — выбор, клик по полю — установка.</li>
+              <li data-i18n="rule3">Повторный клик по кубику — отмена выбора.</li>
+              <li data-i18n="rule4">«Проверить» — оценка. Пустое поле = неверно.</li>
+              <li data-i18n="rule5">Эпоха «почти» — соседняя в списке эпох.</li>
+            </ol>
+          </details>
+        </div>
+      </section>
+
+      <section id="screen-game" class="screen" data-i18n-aria="ariaGame" aria-label="ArmorType — игра" hidden>
+        <header class="image-panel">
+          <div class="image-panel__frame">
+            <img id="round-image" src="" alt="" width="320" height="200" decoding="async" />
+          </div>
+          <p class="image-panel__title" id="round-title"></p>
+        </header>
+
+        <div class="play-area">
+          <div class="slots" id="slots"></div>
+          <aside class="pool-panel">
+            <p class="pool-panel__title" data-i18n="poolTitle">Категории · эпохи · страны</p>
+            <div class="pool" id="pool"></div>
+          </aside>
+        </div>
+
+        <nav class="dock">
+          <button type="button" class="dock__btn dock__btn--ghost" id="btn-menu" data-i18n="btnMenu">Меню</button>
+          <button type="button" class="dock__btn dock__btn--ghost" id="btn-back" data-i18n="btnBack">Назад</button>
+          <button type="button" class="dock__btn dock__btn--primary" id="btn-check" data-i18n="btnCheck">Проверить</button>
+          <button type="button" class="dock__btn dock__btn--ghost" id="btn-stats" data-i18n="btnStats">Статистика</button>
+        </nav>
+      </section>
+
+      <section id="screen-stats" class="screen" data-i18n-aria="ariaStats" aria-label="ArmorType — статистика" hidden>
+        <div class="stats">
+          <p class="stats__brand">ArmorType</p>
+          <h1 data-i18n="statsTitle">Статистика</h1>
+
+          <div class="kd-chart">
+            <svg class="kd-chart__svg" viewBox="0 0 120 120" role="img" id="donut-aria" aria-label="Верно, почти и неверно">
+              <circle class="kd-chart__track" cx="60" cy="60" r="48" />
+              <circle id="donut-mid" class="kd-chart__arc kd-chart__arc--mid" cx="60" cy="60" r="48" />
+              <circle id="donut-bad" class="kd-chart__arc kd-chart__arc--bad" cx="60" cy="60" r="48" />
+              <circle id="donut-ok" class="kd-chart__arc kd-chart__arc--ok" cx="60" cy="60" r="48" />
+            </svg>
+            <div class="kd-chart__center">
+              <span class="kd-chart__kd" id="stat-kd">0.0</span>
+              <span class="kd-chart__label">K/D</span>
+            </div>
+          </div>
+          <p class="kd-chart__legend">
+            <span class="kd-chart__legend-item kd-chart__legend-item--ok" data-i18n="legendOk">верно</span>
+            <span class="kd-chart__legend-item kd-chart__legend-item--mid" data-i18n="legendMid">почти</span>
+            <span class="kd-chart__legend-item kd-chart__legend-item--bad" data-i18n="legendBad">неверно</span>
+          </p>
+
+          <dl class="stats__grid">
+            <div>
+              <dt data-i18n="statCorrect">Верно</dt>
+              <dd id="stat-ok">0</dd>
+            </div>
+            <div>
+              <dt data-i18n="statMid">Почти</dt>
+              <dd id="stat-mid">0</dd>
+            </div>
+            <div>
+              <dt data-i18n="statBad">Неверно</dt>
+              <dd id="stat-bad">0</dd>
+            </div>
+          </dl>
+          <p class="stats__hint" data-i18n="hintKd">K/D = верно ÷ неверно. Пустое поле при проверке — неверно.</p>
+          <p class="stats__sync" id="stats-sync-status" hidden></p>
+        </div>
+        <nav class="dock dock--stats">
+          <button type="button" class="dock__btn dock__btn--ghost" id="btn-stats-menu" data-i18n="btnStatsMenu">В меню</button>
+          <button type="button" class="dock__btn dock__btn--primary" id="btn-stats-back" data-i18n="btnStatsBack">К игре</button>
+        </nav>
+      </section>
+    </div>
+
+    <script src="data.js"></script>
+    <script src="round-images.js"></script>
+    <script src="i18n-data.js"></script>
+    <script src="i18n.js"></script>
+    <script src="rounds-extra.js"></script>
+    <script src="rounds-coverage.js"></script>
+    <script src="config.js"></script>
+    <script src="stats-sync.js"></script>
+    <script src="game.js"></script>
+  </body>
+</html>

@@ -1,0 +1,5 @@
+.DS_Store
+*.log
+
+# Свои ключи Supabase — не пушить (на GitHub задай Secrets, см. workflow)
+config.js
