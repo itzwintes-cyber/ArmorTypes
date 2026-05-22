@@ -27,7 +27,7 @@ body {
 body {
   font-family: var(--font);
   font-weight: 500;
-  background: var(--bg);
+  background: linear-gradient(135deg, #07080c 0%, #0a0c12 100%);
   color: #e8e9ed;
   touch-action: manipulation;
 }
@@ -327,6 +327,7 @@ body {
 }
 
 .slot__drop {
+  position: relative;
   flex: 1;
   display: flex;
   align-items: center;
@@ -334,6 +335,20 @@ body {
   padding: 0.5rem;
   min-height: 72px;
   transition: background 0.15s ease;
+}
+
+.slot__drop--hint {
+  background: rgba(111, 196, 255, 0.08);
+}
+
+.slot__hint {
+  margin-top: 0.35rem;
+  padding: 0.22rem 0.35rem;
+  color: rgba(255, 255, 255, 0.92);
+  background: rgba(12, 119, 182, 0.18);
+  border-radius: 4px;
+  font-size: 0.62rem;
+  line-height: 1.3;
 }
 
 .slot__drop--over {
@@ -434,7 +449,6 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  max-width: 5.5rem;
   padding: 0.18rem 0.35rem;
   font: inherit;
   font-size: 0.58rem;
@@ -450,17 +464,17 @@ body {
   cursor: pointer;
   user-select: none;
   -webkit-user-select: none;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: normal;
 }
 
 .chip--picked {
   outline: 2px solid var(--lime);
   outline-offset: 2px;
-  box-shadow: 0 0 14px rgba(180, 242, 100, 0.45);
-  z-index: 5;
-  position: relative;
+  box-shadow: 0 0 22px rgba(180, 242, 100, 0.55);
+  z-index: 999;
+  position: fixed;
+  cursor: grabbing;
+  transition: none;
 }
 
 .slot__drop--ready {
@@ -709,6 +723,143 @@ body {
 
 .stats__sync[data-state="error"] {
   color: var(--bad);
+}
+
+/* === AUTH SCREEN === */
+.auth {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  overflow-y: auto;
+}
+
+.auth__box {
+  width: 100%;
+  max-width: 360px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+}
+
+.auth__title {
+  margin: 0 0 0.5rem;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--lime);
+  text-align: center;
+}
+
+.auth__subtitle {
+  margin: 0 0 2rem;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.6);
+  text-align: center;
+}
+
+.auth__form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+.auth__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.auth__label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.auth__input {
+  padding: 0.6rem 0.8rem;
+  font-family: var(--font);
+  font-size: 0.9rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: #e8e9ed;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.auth__input:focus {
+  border-color: var(--lime);
+  box-shadow: 0 0 12px rgba(180, 242, 100, 0.2);
+}
+
+.auth__input::placeholder {
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.auth__error {
+  padding: 0.6rem;
+  margin: 0;
+  font-size: 0.75rem;
+  background: rgba(248, 113, 113, 0.1);
+  border: 1px solid var(--bad);
+  border-radius: 6px;
+  color: var(--bad);
+  text-align: center;
+}
+
+.auth__error[hidden] {
+  display: none;
+}
+
+.auth__btn {
+  padding: 0.75rem 1rem;
+  font-family: var(--font);
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: all 0.2s;
+}
+
+.auth__btn--primary {
+  background: var(--lime);
+  color: #000;
+}
+
+.auth__btn--primary:hover {
+  background: #a8e844;
+  box-shadow: 0 0 20px rgba(180, 242, 100, 0.3);
+}
+
+.auth__btn--secondary {
+  background: rgba(180, 242, 100, 0.1);
+  border: 1px solid var(--lime-border);
+  color: var(--lime);
+}
+
+.auth__btn--secondary:hover {
+  background: rgba(180, 242, 100, 0.15);
+  box-shadow: 0 0 16px rgba(180, 242, 100, 0.25);
+}
+
+.auth__hint {
+  margin: 1.5rem 0 0;
+  font-size: 0.8rem;
+  color: var(--lime);
+  text-align: center;
+  word-break: break-all;
+}
+
+.auth__hint[hidden] {
+  display: none;
 }
 
 @media (max-width: 520px) {

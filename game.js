@@ -24,6 +24,7 @@
   const roundTitle = document.getElementById("round-title");
   const btnBack = document.getElementById("btn-back");
   const btnCheck = document.getElementById("btn-check");
+  const btnShowCorrect = document.getElementById("btn-show-correct");
   const btnStats = document.getElementById("btn-stats");
   const btnStatsBack = document.getElementById("btn-stats-back");
   const statOk = document.getElementById("stat-ok");
@@ -45,6 +46,7 @@
 
   const stats = window.StatsStore ? StatsStore.load() : { ok: 0, mid: 0, bad: 0 };
   let roundIndex = 0;
+  let roundOrder = [];
   let checked = false;
   let statsReturnTo = "menu";
   let gameStarted = false;
@@ -62,6 +64,17 @@
       [a[i], a[j]] = [a[j], a[i]];
     }
     return a;
+  }
+
+  function createRoundOrder() {
+    if (!Array.isArray(DATA.rounds) || DATA.rounds.length === 0) return [];
+    return shuffle(DATA.rounds.map((_, index) => index));
+  }
+
+  function getCurrentRound() {
+    if (!roundOrder.length) roundOrder = createRoundOrder();
+    const roundId = roundOrder[roundIndex % roundOrder.length];
+    return DATA.rounds[roundId];
   }
 
   function chipDisplay(text, category) {
@@ -167,13 +180,50 @@
     });
   }
 
+  const NEAR_COUNTRY = {
+    "Соединённые Штаты": ["Канада"],
+    "Канада": ["Соединённые Штаты"],
+    "Россия": ["Советский Союз (СССР)"],
+    "Советский Союз (СССР)": ["Россия"],
+  };
+
+  const TYPE_NEAR_GROUPS = [
+    ["Танк ОБТ", "Танк средний", "Танк лёгкий", "Танк тяжёлый", "Танк-прим. BRDM"],
+    ["БТР", "БТР-Д", "Бронеавтомобиль", "МРАП", "БМП", "БМД", "БМ боевая"],
+    ["САУ", "САУ гаубица", "САУ САУС", "РСЗО", "РСЗО тяжёлая", "Артиллерия", "Гаубица букс.", "Миномёт", "Миномёт самоход."],
+    ["ПУ ОТБР", "ПУ ЗРК", "ЗРК переносной", "ЗРК полевой", "ЗРК дальнего", "ПВО комплекс", "Береговой комплекс", "Береговая ПУ"],
+    ["Истребитель", "Истребитель 5 пок.", "Истребитель-бомб.", "Перехватчик"],
+    ["Штурмовик", "Штурмовик ВТО"],
+    ["Бомбардировщик", "Бомбард. стратег.", "Бомбард. тактич."],
+    ["Транспортный ВС", "Военно-трансп. ВС", "Самолёт-заправщик", "Самолёт АВАКС", "Самолёт РЭБ", "Разведывательный", "Учебно-боевой"],
+    ["Вертолёт ударный", "Вертолёт трансп.", "Вертолёт развед.", "Вертолёт ПВО", "Вертолёт морской"],
+    ["БПЛА ударный", "БПЛА развед.", "БПЛА-камикадзе"],
+    ["Авианосец", "Лёгкий авианосец", "Крейсер", "Эсминец", "Фрегат", "Корвет", "Патрульный корабль", "Сторожевой корабль", "Десантный корабль", "Десантный катер", "Ракетный катер", "Торпедный катер", "Минный заградитель", "Подлодка ДПЛ", "Подлодка АПЛ", "Подлодка с ТНВ"],
+  ];
+
   function scoreField(catId, picked, correct) {
     if (picked === correct) return "ok";
+
     if (catId === "era") {
       const pi = DATA.eras.indexOf(picked);
       const ci = DATA.eras.indexOf(correct);
       if (pi >= 0 && ci >= 0 && Math.abs(pi - ci) === 1) return "mid";
     }
+
+    if (catId === "country") {
+      if (NEAR_COUNTRY[picked]?.includes(correct) || NEAR_COUNTRY[correct]?.includes(picked)) {
+        return "mid";
+      }
+    }
+
+    if (catId === "type") {
+      for (const group of TYPE_NEAR_GROUPS) {
+        if (group.includes(picked) && group.includes(correct)) {
+          return "mid";
+        }
+      }
+    }
+
     return "bad";
   }
 
@@ -231,6 +281,16 @@
     if (menuStatTotal) menuStatTotal.textContent = String(total);
   }
 
+  // Обнови статы из Supabase (вызывается когда Supabase клиент готов)
+  window.updateGameStatsFromSupabase = function(supabaseStats) {
+    if (!supabaseStats) return;
+    stats.ok = supabaseStats.ok || 0;
+    stats.mid = supabaseStats.mid || 0;
+    stats.bad = supabaseStats.bad || 0;
+    updateStatsUI();
+    console.log('[Supabase] Статы загружены:', supabaseStats);
+  };
+
   function updateSyncStatusUI() {
     if (!statsSyncEl || !window.StatsStore) return;
     const cloud = StatsStore.isCloudEnabled();
@@ -277,6 +337,7 @@
 
   function startGame() {
     gameStarted = true;
+    roundOrder = createRoundOrder();
     roundIndex = 0;
     checked = false;
     updateCheckButtonLabel();
@@ -335,6 +396,11 @@
 
   function returnChipToPool(chip) {
     chip.classList.remove("chip--in-slot");
+    chip.style.position = "";
+    chip.style.left = "";
+    chip.style.top = "";
+    chip.style.pointerEvents = "";
+    chip.style.zIndex = "";
     const home = poolHomes[chip.dataset.category] || poolEl;
     home.appendChild(chip);
   }
@@ -369,16 +435,18 @@
       if (ph) ph.hidden = false;
     });
     clearSlotStates();
+    clearCorrectHints();
   }
 
   function loadRound() {
     checked = false;
     btnCheck.disabled = false;
+    if (btnShowCorrect) btnShowCorrect.hidden = true;
     clearPick();
     clearSlotStates();
     resetSlots();
 
-    const round = DATA.rounds[roundIndex % DATA.rounds.length];
+    const round = getCurrentRound();
     const titleRu = round.title || "";
     const titleShown = I18N ? I18N.roundTitle(titleRu) : titleRu;
     roundTitle.textContent = titleShown;
@@ -402,8 +470,9 @@
 
   function checkAnswers() {
     if (checked) return;
-    const round = DATA.rounds[roundIndex % DATA.rounds.length];
+    const round = getCurrentRound();
     let allFilled = true;
+    let roundStats = { ok: 0, mid: 0, bad: 0 }; // Статы текущего раунда
 
     DATA.categories.forEach((cat) => {
       const drop = slotsRoot.querySelector(`[data-drop="${cat.id}"]`);
@@ -413,7 +482,10 @@
       if (!chip) {
         allFilled = false;
         drop.classList.add("slot__drop--bad");
+        const ph = drop.querySelector(".slot__placeholder");
+        if (ph) ph.hidden = true;
         stats.bad += 1;
+        roundStats.bad += 1;
         return;
       }
 
@@ -422,21 +494,69 @@
       const result = scoreField(cat.id, picked, correct);
       drop.classList.add(`slot__drop--${result}`);
       stats[result] += 1;
+      roundStats[result] += 1;
     });
 
     updateStatsUI();
     if (window.StatsStore) StatsStore.save(stats);
+    
+    // Сохрани в Supabase
+    if (window.saveGameStats && typeof saveGameStats === 'function') {
+      saveGameStats(roundStats.ok, roundStats.mid, roundStats.bad);
+    }
+    
     checked = true;
     updateCheckButtonLabel();
+
+    if (btnShowCorrect) {
+      btnShowCorrect.hidden = false;
+      btnShowCorrect.disabled = false;
+    }
 
     if (!allFilled) {
       btnCheck.disabled = false;
     }
   }
 
+  function revealCorrectAnswers() {
+    const round = getCurrentRound();
+    DATA.categories.forEach((cat) => {
+      const drop = slotsRoot.querySelector(`[data-drop="${cat.id}"]`);
+      const chip = getChipInSlot(drop);
+      const correct = round.answers[cat.id];
+      const correctText = chipDisplay(correct, cat.id);
+
+      drop.classList.remove("slot__drop--ok", "slot__drop--mid", "slot__drop--bad");
+      drop.classList.add("slot__drop--hint");
+
+      let hint = drop.querySelector(".slot__hint");
+      if (!hint) {
+        hint = document.createElement("div");
+        hint.className = "slot__hint";
+        drop.appendChild(hint);
+      }
+      hint.textContent = `Правильно: ${correctText}`;
+
+      if (chip) {
+        const picked = chip.dataset.text || chip.textContent;
+        const result = scoreField(cat.id, picked, correct);
+        drop.classList.remove("slot__drop--hint");
+        drop.classList.add(`slot__drop--${result}`);
+      }
+    });
+  }
+
+  function clearCorrectHints() {
+    document.querySelectorAll(".slot__hint").forEach((hint) => hint.remove());
+    document.querySelectorAll(".slot__drop--hint").forEach((drop) => drop.classList.remove("slot__drop--hint"));
+  }
+
   function nextRound() {
     roundIndex += 1;
-    if (roundIndex >= DATA.rounds.length) roundIndex = 0;
+    if (roundIndex >= roundOrder.length) {
+      roundOrder = createRoundOrder();
+      roundIndex = 0;
+    }
     updateCheckButtonLabel();
     loadRound();
   }
@@ -444,6 +564,11 @@
   btnCheck.addEventListener("click", () => {
     if (!checked) checkAnswers();
     else nextRound();
+  });
+
+  btnShowCorrect?.addEventListener("click", () => {
+    if (!checked) return;
+    revealCorrectAnswers();
   });
 
   btnBack.addEventListener("click", () => {
@@ -462,7 +587,7 @@
     applyStaticI18n();
     updateSyncStatusUI();
     if (gameStarted && !screenGame.hidden) {
-      const round = DATA.rounds[roundIndex % DATA.rounds.length];
+      const round = getCurrentRound();
       const titleRu = round.title || "";
       const titleShown = I18N ? I18N.roundTitle(titleRu) : titleRu;
       if (roundTitle) roundTitle.textContent = titleShown;
@@ -564,8 +689,16 @@
 
   function wireDropTarget(drop) {
     drop.addEventListener("click", (e) => {
-      if (checked || !pickedChip) return;
+      if (checked) return;
       e.stopPropagation();
+
+      const currentChip = getChipInSlot(drop);
+      if (!pickedChip && currentChip) {
+        pickChip(currentChip);
+        return;
+      }
+
+      if (!pickedChip) return;
       placePickedInDrop(drop);
     });
   }

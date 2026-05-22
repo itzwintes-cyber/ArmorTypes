@@ -121,11 +121,37 @@
 
   let lang = "ru";
 
+  function detectBrowserLang() {
+    const candidates = [
+      ...(navigator.languages || []),
+      navigator.language,
+      navigator.userLanguage,
+    ]
+      .filter(Boolean)
+      .map((value) => String(value).toLowerCase());
+
+    for (const candidate of candidates) {
+      if (candidate.startsWith("ru") || candidate.startsWith("be") || candidate.startsWith("uk")) {
+        return "ru";
+      }
+      if (candidate.startsWith("en")) {
+        return "en";
+      }
+    }
+
+    return "en";
+  }
+
   function loadLang() {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved === "en" || saved === "ru") lang = saved;
+      if (saved === "en" || saved === "ru") {
+        lang = saved;
+        return;
+      }
     } catch (_) {}
+
+    lang = detectBrowserLang();
   }
 
   function t(key) {

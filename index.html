@@ -84,6 +84,7 @@
         <nav class="dock">
           <button type="button" class="dock__btn dock__btn--ghost" id="btn-menu" data-i18n="btnMenu">Меню</button>
           <button type="button" class="dock__btn dock__btn--ghost" id="btn-back" data-i18n="btnBack">Назад</button>
+          <button type="button" class="dock__btn dock__btn--secondary" id="btn-show-correct" hidden>Показать правильное</button>
           <button type="button" class="dock__btn dock__btn--primary" id="btn-check" data-i18n="btnCheck">Проверить</button>
           <button type="button" class="dock__btn dock__btn--ghost" id="btn-stats" data-i18n="btnStats">Статистика</button>
         </nav>
@@ -134,6 +135,7 @@
           <button type="button" class="dock__btn dock__btn--primary" id="btn-stats-back" data-i18n="btnStatsBack">К игре</button>
         </nav>
       </section>
+
     </div>
 
     <script src="data.js"></script>
@@ -144,6 +146,7 @@
     <script src="rounds-coverage.js"></script>
     <script src="config.js"></script>
     <script src="stats-sync.js"></script>
+    <script src="supabase-client.js"></script>
     <script src="game.js"></script>
   </body>
 </html>
